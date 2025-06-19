@@ -1,0 +1,315 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ZebraStream Management API",
+    "summary": "This is the API to manage access tokens and retrieve usage statistics for the ZebraStream data relay.",
+    "description": "\n## About\nThe management API provides endpoints for creating, deleting, and listing access tokens. These access tokens can then\nbe used to write to or read from streams, respectively. You can also show account level usage statistics. In order to\noperate this API, you need to create a management API key in the [ZebraStream frontend](https://www.zebrastream.io/dashboard).\n\n**Note that full stream address URLs must always include the API prefix.**\n\n## Access Tokens\n* Newly created access tokens have an ID part and a secret. The ID is used to identify the token, while the secret is used to authenticate data stream access.\n* The secret is only shown once and must be stored securely by the user. If the secret is lost, it may be abused, creating costs or giving access to tranfered data, if not end-to-end encrypted. In such a case, delete the token and create a new one.\n* Access tokens can be created for a specific stream path or for all streams within a sub-space (recursive mode).\n* Access tokens can be created with either read or write permission, but not both.\n",
+    "termsOfService": "https://www.zebrastream.io/resources/terms",
+    "contact": {
+      "name": "parsimonIT ZebraStream",
+      "url": "https://www.zebrastream.io/",
+      "email": "support@zebrastream.io"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/v0/accesstoken.create": {
+      "post": {
+        "summary": "Create Access Token",
+        "description": "Create an access token for a given stream path within the user space.\n\n**Example**:\n```\nPOST <api_prefix>/accesstoken.create HTTP/1.1\nHost: <zebrastream_host>\nContent-Type: application/x-www-form-urlencoded\nAuthorization: Bearer <management_api_key>\n\npath=/mystream&access_mode=write&recursive=false&expires=84094751999\n```",
+        "operationId": "accesstoken_create",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Bearer style authorization header",
+              "title": "Authorization"
+            },
+            "description": "Bearer style authorization header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_access_token_v0_accesstoken_create_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/accesstoken.delete": {
+      "post": {
+        "summary": "Delete Access Token",
+        "description": "Delete an accesstoken.\n\n**Example**:\n```\nPOST <api_prefix>/accesstoken.delete HTTP/1.1\nHost: <zebrastream_host>\nContent-Type: application/x-www-form-urlencoded\nAuthorization: Bearer <management_api_key>\n\ntoken_id=123456789012\n```",
+        "operationId": "accesstoken_delete",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Bearer style authorization header",
+              "title": "Authorization"
+            },
+            "description": "Bearer style authorization header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_delete_access_token_v0_accesstoken_delete_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/accesstoken.list": {
+      "get": {
+        "summary": "List Access Tokens",
+        "description": "List all accesstokens for the current user.\n\n**Example**:\n```\nGET <api_prefix>/accesstoken.list HTTP/1.1\nHost: <zebrastream_host>\nAuthorization: Bearer <management_api_key>\n```",
+        "operationId": "accesstoken_list",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Bearer style authorization header",
+              "title": "Authorization"
+            },
+            "description": "Bearer style authorization header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/usage.show": {
+      "get": {
+        "summary": "Show Usage",
+        "description": "List usage for the user.\n\n**Example**:\n```\nGET <api_prefix>/usage.show?month=2024-12 HTTP/1.1\nHost: <zebrastream_host>\nAuthorization: Bearer <management_api_key>\n```",
+        "operationId": "usage_show",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$",
+              "description": "Month to show usage for, for instance 2024-12",
+              "title": "Month"
+            },
+            "description": "Month to show usage for, for instance 2024-12"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_create_access_token_v0_accesstoken_create_post": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "pattern": "^(/[a-z0-9._-]*[a-z0-9_-][a-z0-9._-]*)+/?$",
+            "title": "Path",
+            "description": "Path within the user space"
+          },
+          "access_mode": {
+            "type": "string",
+            "pattern": "^(read|write)$",
+            "title": "Access Mode",
+            "description": "Any of 'read' or 'write'"
+          },
+          "recursive": {
+            "type": "boolean",
+            "title": "Recursive",
+            "description": "Whether the access token is recursive"
+          },
+          "expires": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Expires",
+            "description": "Expiration time in seconds since epoch (UNIX time)"
+          },
+          "idem_key": {
+            "type": "string",
+            "maxLength": 12,
+            "minLength": 12,
+            "title": "Idem Key",
+            "description": "Idempotency key used to avoid creating multiple keys by accident"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "access_mode",
+          "recursive",
+          "expires"
+        ],
+        "title": "Body_create_access_token_v0_accesstoken_create_post"
+      },
+      "Body_delete_access_token_v0_accesstoken_delete_post": {
+        "properties": {
+          "token_id": {
+            "type": "string",
+            "title": "Token Id",
+            "description": "The ID of the access token to delete"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token_id"
+        ],
+        "title": "Body_delete_access_token_v0_accesstoken_delete_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
