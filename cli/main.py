@@ -16,14 +16,13 @@ from api_client.api.default import (
     accesstoken_list,
     usage_show,
 )
-
-# TODO: simplify
 from api_client.models.body_create_access_token_v0_accesstoken_create_post import (
     BodyCreateAccessTokenV0AccesstokenCreatePost as CreateTokenBody,
 )
 from api_client.models.body_delete_access_token_v0_accesstoken_delete_post import (
     BodyDeleteAccessTokenV0AccesstokenDeletePost as DeleteTokenBody,
 )
+from .util import print_exit_api_error
 
 DEFAULT_BASE_URL = "https://api.zebrastream.io"
 
@@ -38,6 +37,7 @@ def get_client(api_key: Optional[str] = None) -> AuthenticatedClient:
         raise typer.BadParameter("API key is required. Set ZEBRASTREAM_API_KEY or use --api-key")
     base_url = os.getenv("ZEBRASTREAM_API_URL", DEFAULT_BASE_URL)
     return AuthenticatedClient(base_url=base_url, token=api_key)
+
 
 @app.command()
 def create_token(
@@ -55,7 +55,7 @@ def create_token(
             dt = datetime.datetime.fromisoformat(expires)
             expires_ts = int(dt.timestamp())
         except Exception:
-            typer.echo("[red]Invalid date format for --expires. Use ISO 8601, e.g. 2025-07-01 or 2025-07-01T12:34:56[/red]")
+            print("[red]Invalid date format for --expires. Use ISO 8601, e.g. 2025-07-01 or 2025-07-01T12:34:56[/red]")
             raise typer.Exit(1)
     body = CreateTokenBody(
         path=path,
@@ -63,17 +63,20 @@ def create_token(
         expires=expires_ts,
         recursive=recursive
     )
-    response = accesstoken_create.sync(client=client, body=body)
+    response = accesstoken_create.sync_detailed(client=client, body=body)
+    print_exit_api_error(response)
+    data = response.parsed
     table = Table(title="Created Access Token")
     table.add_column("Token ID")
     table.add_column("Path")
     table.add_column("Token")
     table.add_row(
-        response["token_id"],
-        response["path"],
-        response["token"],
+        data["token_id"],
+        data["path"],
+        data["token"],
     )
     print(table)
+
 
 @app.command()
 def list_tokens(
@@ -81,15 +84,15 @@ def list_tokens(
 ) -> None:
     """List all access tokens."""
     client = get_client(api_key)
-    tokens = accesstoken_list.sync(client=client)
-
+    response = accesstoken_list.sync_detailed(client=client)
+    print_exit_api_error(response)
+    tokens = response.parsed
     table = Table(title="Access Tokens")
     table.add_column("Token ID")
     table.add_column("Path")
     table.add_column("Access Mode")
     table.add_column("Recursive")
     table.add_column("Expires")
-
     now = int(time.time())
     for token in tokens:
         expires_ts = token.get("expires")
@@ -116,7 +119,10 @@ def delete_token(
 ) -> None:
     """Delete an access token."""
     client = get_client(api_key)
-    accesstoken_delete.sync(client=client, body=DeleteTokenBody(token_id=token_id))
+    response = accesstoken_delete.sync_detailed(client=client, body=DeleteTokenBody(token_id=token_id))
+    print_exit_api_error(response)
+    data = response.parsed
+    assert token_id == data['token_id'], "Token ID mismatch"
     print(f"Token '{token_id}' deleted successfully")
 
 
@@ -127,7 +133,9 @@ def show_usage(
 ) -> None:
     """Show usage statistics."""
     client = get_client(api_key)
-    usage = usage_show.sync(client=client, month=month) if month else usage_show.sync(client=client)
+    response = usage_show.sync_detailed(client=client, month=month) if month else usage_show.sync_detailed(client=client)
+    print_exit_api_error(response)
+    usage = response.parsed
 
     def format_bytes(size):
         # Human-readable bytes conversion
@@ -141,7 +149,6 @@ def show_usage(
     table.add_column("Month")
     table.add_column("Volume (bytes)")
     table.add_column("Volume (human)")
-
     table.add_row(
         usage["month"],
         str(usage["volume_bytes"]),
@@ -149,8 +156,10 @@ def show_usage(
     )
     print(table)
 
+
 def main() -> None:
     app()
+
 
 if __name__ == "__main__":
     main()
