@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """ZebraStream CLI main module."""
 import datetime
-import os
 import time
 from typing import Optional
 
@@ -23,20 +22,22 @@ from api_client.models.body_delete_access_token_v0_accesstoken_delete_post impor
     BodyDeleteAccessTokenV0AccesstokenDeletePost as DeleteTokenBody,
 )
 from .util import print_exit_api_error
-
-DEFAULT_BASE_URL = "https://api.zebrastream.io"
+from .config import config
 
 app = typer.Typer()
 
 
-def get_client(api_key: Optional[str] = None) -> AuthenticatedClient:
+def get_client() -> AuthenticatedClient:
     """Get an authenticated API client."""
-    if not api_key:
-        api_key = os.getenv("ZEBRASTREAM_API_KEY")
-    if not api_key:
-        raise typer.BadParameter("API key is required. Set ZEBRASTREAM_API_KEY or use --api-key")
-    base_url = os.getenv("ZEBRASTREAM_API_URL", DEFAULT_BASE_URL)
-    return AuthenticatedClient(base_url=base_url, token=api_key)
+    try:
+        api_key = config.api_key
+    except Exception:
+        raise typer.BadParameter("API key is required. Set it as environment variable ZEBRASTREAM_API_KEY, or in config")
+    try:
+        api_url = config.api_url
+    except Exception:
+        raise typer.BadParameter("API URL is required. Set it as environment variable ZEBRASTREAM_API_URL or in config")
+    return AuthenticatedClient(base_url=api_url, token=api_key)
 
 
 @app.command()
@@ -45,10 +46,9 @@ def create_token(
     access_mode: str = typer.Option(..., help="Access mode (e.g. read, write)"),
     expires: str = typer.Option(..., help="Expiration as ISO 8601 datetime (e.g. 2025-07-01 or 2025-07-01T12:34:56)."),
     recursive: bool = typer.Option(False, help="Whether the token is recursive (default: False)"),
-    api_key: Optional[str] = typer.Option(None, help="API key (optional if ZEBRASTREAM_API_KEY is set)")
 ) -> None:
     """Create a new access token."""
-    client = get_client(api_key)
+    client = get_client()
     expires_ts = None
     if expires:
         try:
@@ -79,11 +79,9 @@ def create_token(
 
 
 @app.command()
-def list_tokens(
-    api_key: Optional[str] = typer.Option(None, help="API key (optional if ZEBRASTREAM_API_KEY is set)")
-) -> None:
+def list_tokens() -> None:
     """List all access tokens."""
-    client = get_client(api_key)
+    client = get_client()
     response = accesstoken_list.sync_detailed(client=client)
     print_exit_api_error(response)
     tokens = response.parsed
@@ -115,10 +113,9 @@ def list_tokens(
 @app.command()
 def delete_token(
     token_id: str = typer.Option(..., help="ID of the token to delete (e.g. key_xxxxxxxxxxxxxxxx)"),
-    api_key: Optional[str] = typer.Option(None, help="API key (optional if ZEBRASTREAM_API_KEY is set)")
 ) -> None:
     """Delete an access token."""
-    client = get_client(api_key)
+    client = get_client()
     response = accesstoken_delete.sync_detailed(client=client, body=DeleteTokenBody(token_id=token_id))
     print_exit_api_error(response)
     data = response.parsed
@@ -129,10 +126,9 @@ def delete_token(
 @app.command()
 def show_usage(
     month: Optional[str] = typer.Option(None, help="Month in YYYY-MM format (e.g. 2025-06)"),
-    api_key: Optional[str] = typer.Option(None, help="API key (optional if ZEBRASTREAM_API_KEY is set)")
 ) -> None:
     """Show usage statistics."""
-    client = get_client(api_key)
+    client = get_client()
     response = usage_show.sync_detailed(client=client, month=month) if month else usage_show.sync_detailed(client=client)
     print_exit_api_error(response)
     usage = response.parsed
@@ -155,6 +151,13 @@ def show_usage(
         format_bytes(usage["volume_bytes"])
     )
     print(table)
+
+
+@app.command()
+def persist_config():
+    """Save current configuration to disk."""
+    config.persist()
+    print("[green]Configuration saved to disk.[/green]")
 
 
 def main() -> None:

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Utility functions for ZebraStream CLI."""
 import json
 import typer
 from rich import print
