@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zebrastream-cli"
 version = "0.0.1"
-description = "A client library for accessing ZebraStream Management API"
+description = "An open-source CLI for managing ZebraStream accounts."
 authors = ["Johannes Dröge <p5p129dw@parsimonit.com>"]
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -25,7 +25,7 @@ rich = "^13.0.0"
 confuse = "^2.0.1"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]

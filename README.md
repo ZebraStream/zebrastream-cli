@@ -1,6 +1,6 @@
 # ZebraStream CLI
 
-A command-line interface for the ZebraStream Management API. Easily manage access tokens and view usage statistics for your ZebraStream account from your terminal.
+An open-source command-line interface for the Management API of [ZebraStream](https://www.zebrastream.io), a simple, managed service to establish data flow between organizations, applications, and devices. Easily manage access tokens and view usage statistics for your ZebraStream account from your terminal.
 
 ## Features
 - Create new access tokens
@@ -32,10 +32,15 @@ pip install git+https://github.com/ZebraStream/zebrastream-cli.git
 After installation, the CLI is available as `zebrastream-cli`:
 
 ### Authentication
-All commands require an API key. You can provide it via the `--api-key` option or set it as an environment variable:
+All commands require an API key. You can set it as an environment variable:
 
 ```bash
 export ZEBRASTREAM_API_KEY=your_api_key_here
+```
+
+You can also set the API key persistently:
+```bash
+ZEBRASTREAM_API_KEY=your_api_key_here zebrastream-cli persist-config
 ```
 
 ### Optional: Custom API URL
@@ -72,6 +77,8 @@ zebrastream-cli delete-token --token-id key_xxxxxxxxxxxxxxxx
 ```bash
 zebrastream-cli show-usage [--month YYYY-MM]
 ```
+
+
 
 ## Help
 To see the available commands use:
